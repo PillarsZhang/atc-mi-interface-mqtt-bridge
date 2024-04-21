@@ -1,6 +1,6 @@
 # ATC MI Interface MQTT Bridge
 
-This is a Python-based project that scans ATC Mi devices and publishes the data to an MQTT server.
+Scan ATC Mi devices and publish the data to an MQTT server for Home Assistant.
 
 ## Installation
 
