@@ -1,0 +1,5 @@
+atc-mi-interface
+ha-mqtt-discoverable
+pyyaml
+fire
+loguru
