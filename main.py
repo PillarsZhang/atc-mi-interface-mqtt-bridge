@@ -19,6 +19,20 @@ def mac_str_to_bytes(mac_str: str, split_char: str = ":") -> bytes:
     return bytes.fromhex(mac_str.replace(split_char, ""))
 
 
+async def task_wrapper(task_func, *args, **kwargs):
+    task_name = task_func.__name__
+    while True:
+        try:
+            logger.info(f"Starting task: {task_name}, args: {args}, kwargs: {kwargs}")
+            await task_func(*args, **kwargs)
+        except Exception as e:
+            logger.error(
+                f"Task {task_name}, args: {args}, kwargs: {kwargs} "
+                f"failed with error: {e}. Restarting..."
+            )
+            await asyncio.sleep(10)
+
+
 async def ble_scanner(
     bindkey: dict[bytes, bytes], sensorkey: dict[bytes, tuple], queue: asyncio.Queue
 ):
@@ -82,6 +96,14 @@ async def mqtt_publisher(queue: asyncio.Queue, mqtt_config: dict, devices_config
             info=device_info, sensor=device_sensor, config=c
         )
 
+    num_item_ignore = 0
+    try:
+        while True:
+            queue.get_nowait()
+            num_item_ignore += 1
+    except asyncio.QueueEmpty:
+        logger.info(f"Ignore {num_item_ignore} items in queue")
+
     while True:
         index, mac_address, data = await queue.get()
         logger.info(f"{index=}, {mac_bytes_to_str(mac_address)=}, {data=}")
@@ -134,15 +156,15 @@ def main(
     if not bridge:
         loop.run_until_complete(
             asyncio.gather(
-                ble_scanner(bindkey, sensorkey, queue),
-                log_data(queue),
+                task_wrapper(ble_scanner, bindkey, sensorkey, queue),
+                task_wrapper(log_data, queue),
             )
         )
     else:
         loop.run_until_complete(
             asyncio.gather(
-                ble_scanner(bindkey, sensorkey, queue),
-                mqtt_publisher(queue, config_dic["mqtt"], config_dic["devices"]),
+                task_wrapper(ble_scanner, bindkey, sensorkey, queue),
+                task_wrapper(mqtt_publisher, queue, config_dic["mqtt"], config_dic["devices"]),
             )
         )
 
