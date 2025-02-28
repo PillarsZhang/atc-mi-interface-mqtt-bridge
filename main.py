@@ -106,7 +106,7 @@ async def mqtt_publisher(queue: asyncio.Queue, mqtt_config: dict, devices_config
 
     while True:
         index, mac_address, data = await queue.get()
-        logger.info(f"{index=}, {mac_bytes_to_str(mac_address)=}, {data=}")
+        logger.debug(f"{index=}, {mac_bytes_to_str(mac_address)=}, {data=}")
         # Log example:
         # index=1, mac_bytes_to_str(mac_address)='A4:C1:38:7A:A5:7E',
         # data={'temperature': (29.93, '°C'), 'humidity': (37.44, '%'), 'battery_level': (100, '%')}
@@ -119,7 +119,7 @@ async def mqtt_publisher(queue: asyncio.Queue, mqtt_config: dict, devices_config
             ]
             if unit == unit_of_measurement:
                 sensor.set_state(value)
-                logger.info(f"Set state: {sensor.state_topic=} as {value} {unit}")
+                logger.debug(f"Set state: {sensor.state_topic=} as {value} {unit}")
             else:
                 logger.error(f"Unit mismatch: {key=}, {value=}, {unit=}, {unit_of_measurement=}")
 
@@ -128,7 +128,7 @@ def main(
     work_dir: str = None,
     bridge: bool = False,
     config: str = "./config.yaml",
-    log_level: str = "DEBUG",
+    log_level: str = "INFO",
     log_file: str = "./logs/{time}.log",
 ):
     if work_dir:
